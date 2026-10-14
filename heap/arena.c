@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 
 typedef struct {
     uint8_t *buffer;
@@ -66,6 +67,13 @@ void simulate_incoming_data(Arena *a, uint8_t *values, uint8_t values_size, uint
  */
 void clean(Arena *a);
 
+/**
+ * @brief Resets the Arena preventing new allocation and cleanup 
+ * @param a Arena pointer
+ * @return void
+ */
+void arena_reset(Arena *a);
+
 /// MAIN METHOD /////////////////////////////////////////////////////////////////////////
 
 int main(void) {
@@ -82,6 +90,14 @@ int main(void) {
     // Arena logic test 
     simulate_incoming_data(arena, testing_values, testing_val_size, block_size);
     retrieve(arena, block_size, strating_offset);
+    // reset the arena 
+    arena_reset(arena);
+    // re-use previously allocated Arena without re-allocating it 
+    uint8_t val = 99;
+    uint8_t new_block_size = 200;
+    simulate_incoming_data(arena, &val, 1, new_block_size);
+
+    // re-claming the memory (just for testing purposes)
     clean(arena);
     
     return 0;
@@ -158,4 +174,9 @@ void simulate_incoming_data(Arena *a, uint8_t *values, uint8_t values_size, uint
 void clean(Arena *a) {
     if (a->buffer != NULL) free(a->buffer);
     free(a);
+}
+
+void arena_reset(Arena *a) {
+    a->current_offset = 0;
+    memset(a->buffer, 0, a->capacity);
 }
