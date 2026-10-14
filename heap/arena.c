@@ -22,9 +22,10 @@ void arena_init(Arena **a, size_t size);
  * of pre-allocated memory
  * @param a Arena pointer
  * @param requested_size size_t
+ * @param alignment size_t
  * @return void pointer
  */
-void *arena_alloc(Arena *a, size_t requested_size);
+void *arena_alloc(Arena *a, size_t requested_size, size_t alignment);
 
 /**
  * @brief Alloc a new block from the Arena and store a value 
@@ -34,9 +35,10 @@ void *arena_alloc(Arena *a, size_t requested_size);
  * @param a Arena pointer
  * @param value uint8_t
  * @param block_size size_t
+ * @param alignment uint8_t
  * @return uint8_t
  */
-uint8_t alloc_and_store(Arena *a, uint8_t value, size_t block_size);
+uint8_t alloc_and_store(Arena *a, uint8_t value, size_t block_size, uint8_t alignment);
 
 /**
  * @brief Prints out the value stored in a block allocated in the Arena. 
@@ -56,9 +58,10 @@ void retrieve(Arena *a, size_t block_size, size_t offset);
  * @param values uint8_t
  * @param values_size uint8_t
  * @param block_size uint8_t
+ * @param uint8_t alignments
  * @return void
  */
-void simulate_incoming_data(Arena *a, uint8_t *values, uint8_t values_size, uint8_t block_size);
+void simulate_incoming_data(Arena *a, uint8_t *values, uint8_t values_size, uint8_t block_size, uint8_t *alignments);
 
 /**
  * @brief Cleans up allocated memory
@@ -86,16 +89,20 @@ int main(void) {
     uint8_t testing_val_size = sizeof(testing_values) / sizeof(testing_values[0]);
     uint8_t block_size = 127;
     size_t strating_offset = 0;
+    uint8_t alignments[4] = {1,1,1};
+    uint8_t alignments_second_test[3] = {1, 8, 1};
 
     // Arena logic test 
-    simulate_incoming_data(arena, testing_values, testing_val_size, block_size);
+    simulate_incoming_data(arena, testing_values, testing_val_size, block_size, alignments);
     retrieve(arena, block_size, strating_offset);
     // reset the arena 
     arena_reset(arena);
     // re-use previously allocated Arena without re-allocating it 
-    uint8_t val = 99;
-    uint8_t new_block_size = 200;
-    simulate_incoming_data(arena, &val, 1, new_block_size);
+    uint8_t new_values[3] = {99, 81, 14};
+    uint8_t new_testing_val_size = sizeof(new_values) / sizeof(new_values[0]);
+    uint8_t new_block_size = 80;
+    simulate_incoming_data(arena, new_values, new_testing_val_size, new_block_size, alignments_second_test);
+    retrieve(arena, new_block_size, strating_offset); 
 
     // re-claming the memory (just for testing purposes)
     clean(arena);
@@ -118,22 +125,30 @@ void arena_init(Arena **a, size_t size) {
     *a = arena;
 }
 
-void *arena_alloc(Arena *a, size_t requested_size) {
-    if (requested_size > a->capacity || (a->current_offset + requested_size) > a->capacity) {
+void *arena_alloc(Arena *a, size_t requested_size, size_t alignment) {
+    // calculate the pagging based on the alignment 
+    // to keep the memory aligned based on the type 
+    size_t modulo = a->current_offset % alignment;
+    size_t padding = (modulo == 0) ? 0 : (alignment - modulo);
+    
+    if (requested_size > a->capacity || (a->current_offset + padding + requested_size) > a->capacity) {
         fprintf(stderr, "The requested size overun the current Arena's capacity\n");
         return NULL;
     } else {
+        // add the padding first to the current offset
+        a->current_offset += padding;
         // allocate a new block by adding the current_offset to the buffer 
         void *buffer = (void *)((char *)a->buffer + a->current_offset);
-        a->current_offset += sizeof(char) * requested_size;
+        // add the requested_size
+        a->current_offset += (sizeof(char) * requested_size);
         return buffer;
     }
 }
 
 
-uint8_t  alloc_and_store(Arena *a, uint8_t value, size_t block_size) {
+uint8_t  alloc_and_store(Arena *a, uint8_t value, size_t block_size, uint8_t alignment) {
     // Allocate a new block
-    void *new_block = arena_alloc(a, block_size);
+    void *new_block = arena_alloc(a, block_size, alignment);
 
     if (new_block != NULL) {
         // cast assign a value to that memory block
@@ -157,11 +172,11 @@ void retrieve(Arena *a, size_t block_size, size_t offset) {
 }
 
 
-void simulate_incoming_data(Arena *a, uint8_t *values, uint8_t values_size, uint8_t block_size) {
+void simulate_incoming_data(Arena *a, uint8_t *values, uint8_t values_size, uint8_t block_size, uint8_t *alignments) {
     
     for (uint8_t i = 0; i < values_size; i++) {
         
-        uint8_t n = alloc_and_store(a, values[i], block_size);
+        uint8_t n = alloc_and_store(a, values[i], block_size, alignments[i]);
         
         if (n == 1) {
             printf("Value %d stored in the new allocated block\n", values[i]);
