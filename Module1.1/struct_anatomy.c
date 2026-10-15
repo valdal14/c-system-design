@@ -61,32 +61,33 @@ void audit_struct_layout(void) {
     show_offsets(COM);
     printf("-------------------------------------\n");
 
-
-    uint64_t useful_bytes_raw = (offsetof(RawEventMeta, version) +
-        offsetof(RawEventMeta, timestamp_ns) +
-        offsetof(RawEventMeta, source_id) +
-        offsetof(RawEventMeta, payload_len) +
-        offsetof(RawEventMeta, flags));
+    RawEventMeta dummy_raw;
+    size_t useful_bytes_raw = sizeof(dummy_raw.version) +
+        sizeof(dummy_raw.timestamp_ns) +
+        sizeof(dummy_raw.source_id) +
+        sizeof(dummy_raw.payload_len) +
+        sizeof(dummy_raw.flags);
     
-
-    uint64_t useful_bytes_com = (offsetof(CompactEventMeta, version) +
-        offsetof(CompactEventMeta, timestamp_ns) +
-        offsetof(CompactEventMeta, source_id) +
-        offsetof(CompactEventMeta, payload_len) +
-        offsetof(CompactEventMeta, flags));
+    CompactEventMeta dummy_com;
+    size_t useful_bytes_com = sizeof(dummy_com.version) +
+        sizeof(dummy_com.timestamp_ns) +
+        sizeof(dummy_com.source_id) +
+        sizeof(dummy_com.payload_len) +
+        sizeof(dummy_com.flags);
     
-    printf("Useful bytes RawEventMeta    : %llu\n", useful_bytes_raw);
-    printf("Useful bytes CompactEventMeta: %llu\n", useful_bytes_com);
+    
+    printf("Useful bytes RawEventMeta    : %zu\n", useful_bytes_raw);
+    printf("Useful bytes CompactEventMeta: %zu\n", useful_bytes_com);
     printf("-------------------------------------\n");
 
-    uint64_t wasted_padding_raw = raw_size - useful_bytes_raw;
-    uint64_t wasted_padding_com = com_size - useful_bytes_com;
+    int64_t wasted_padding_raw = raw_size - useful_bytes_raw;
+    int64_t wasted_padding_com = com_size - useful_bytes_com;
 
     printf("Wasted RawEventMeta padding    : %llu\n", wasted_padding_raw);
     printf("Wasted CompactEventMeta padding: %llu\n", wasted_padding_com);
     printf("-------------------------------------\n");
 
-    uint64_t total_bytes_saved = (sizeof(RawEventMeta) - sizeof(CompactEventMeta)) * packtes_num;
+    int64_t total_bytes_saved = (sizeof(RawEventMeta) - sizeof(CompactEventMeta)) * packtes_num;
 
     printf("Total bytes saved: %llu\n", total_bytes_saved);
 
