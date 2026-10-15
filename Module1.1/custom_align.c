@@ -46,7 +46,7 @@ void *aligned_calloc_array(size_t count, size_t elem_size, size_t alignment) {
 
     if (count == 0 || elem_size == 0) return NULL;
 
-    void *buffer = (void *)calloc(1, (sizeof(char) * count) + alignment);
+    void *buffer = (void *)calloc(1, (elem_size * count) + alignment);
     
     if (buffer == NULL)  {
         perror("Could not allocated memory block");
