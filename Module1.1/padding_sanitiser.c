@@ -112,6 +112,8 @@ void init_meta(RawEventMeta **meta) {
     heap_meta->source_id = 111;
     heap_meta->payload_len = 14;
     heap_meta->flags = 4;
-    
+
+    if (meta == NULL) return;
+
     *meta = heap_meta;
 }
