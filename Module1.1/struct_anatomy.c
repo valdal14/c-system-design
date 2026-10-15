@@ -87,9 +87,9 @@ void audit_struct_layout(void) {
     printf("Wasted CompactEventMeta padding: %llu\n", wasted_padding_com);
     printf("-------------------------------------\n");
 
-    int64_t total_bytes_saved = (sizeof(RawEventMeta) - sizeof(CompactEventMeta)) * packtes_num;
+    size_t total_bytes_saved = (sizeof(RawEventMeta) - sizeof(CompactEventMeta)) * packtes_num;
 
-    printf("Total bytes saved: %llu\n", total_bytes_saved);
+    printf("Total bytes saved: %zu\n", total_bytes_saved);
 
 }
 
