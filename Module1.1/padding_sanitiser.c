@@ -53,17 +53,31 @@ int main(void) {
         printf("Heap and Stack RawEventMeta are NOT identical\n"); 
     }
     
+    free(heap_meta);
     return 0;
 }
 
 
 size_t count_nonzero_padding_bytes(const RawEventMeta *meta) {
-    size_t version = offsetof(RawEventMeta, version) / sizeof(meta->version);
-    size_t timestamp = offsetof(RawEventMeta, timestamp_ns) / sizeof(meta->timestamp_ns);
-    size_t source = offsetof(RawEventMeta, source_id) / sizeof(meta->source_id);
-    size_t payload = offsetof(RawEventMeta, payload_len) / sizeof(meta->payload_len);
-    size_t flags = offsetof(RawEventMeta, flags) / sizeof(meta->flags);
-    return version + timestamp + source + payload + flags;
+    
+    if(meta == NULL) {
+        fprintf(stderr, "Unexpected  RawEventMeta pointer was passed\n");
+        exit(EXIT_FAILURE);
+    }
+
+    const uint8_t *raw_bytes = (const uint8_t *)meta;
+    size_t nonzero_count = 0;
+
+    size_t gap_start = offsetof(RawEventMeta, version) + sizeof(meta->version);
+    size_t gap_end   = offsetof(RawEventMeta, flags);
+
+    for (size_t i = gap_start; i < gap_end; i++) {
+        if (raw_bytes[i] != 0) {
+            nonzero_count++;
+        }    
+    }
+
+    return nonzero_count;
 }
 
 void init_meta(RawEventMeta **meta) {
