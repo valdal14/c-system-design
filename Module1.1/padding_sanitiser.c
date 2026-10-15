@@ -59,24 +59,43 @@ int main(void) {
 
 
 size_t count_nonzero_padding_bytes(const RawEventMeta *meta) {
-    
+   
     if(meta == NULL) {
-        fprintf(stderr, "Unexpected  RawEventMeta pointer was passed\n");
+        fprintf(stderr, "Unexpected RawEventMeta pointer was passed\n");
         exit(EXIT_FAILURE);
     }
-
+    
     const uint8_t *raw_bytes = (const uint8_t *)meta;
     size_t nonzero_count = 0;
 
-    size_t gap_start = offsetof(RawEventMeta, version) + sizeof(meta->version);
-    size_t gap_end   = offsetof(RawEventMeta, flags);
+    size_t gap_start1 = (offsetof(RawEventMeta, version) + sizeof(meta->version));
+    size_t gap_end1   = offsetof(RawEventMeta, timestamp_ns);
 
-    for (size_t i = gap_start; i < gap_end; i++) {
+    size_t gap_start2 = (offsetof(RawEventMeta, source_id) + sizeof(meta->source_id));
+    size_t gap_end2   = offsetof(RawEventMeta, payload_len);
+
+    size_t gap_start3 = (offsetof(RawEventMeta, flags) + sizeof(meta->flags));
+    size_t gap_end3   = sizeof(RawEventMeta);
+
+    
+    for (size_t i = gap_start1; i < gap_end1; i++) {
         if (raw_bytes[i] != 0) {
             nonzero_count++;
         }    
     }
 
+    for (size_t i = gap_start2; i < gap_end2; i++) {
+        if (raw_bytes[i] != 0) {
+            nonzero_count++;
+        }    
+    }
+    
+    for (size_t i = gap_start3; i < gap_end3; i++) {
+        if (raw_bytes[i] != 0) {
+            nonzero_count++;
+        }    
+    }
+    
     return nonzero_count;
 }
 
