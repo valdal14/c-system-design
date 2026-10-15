@@ -54,7 +54,7 @@ int main(void)
 
     // retrieve values 
     for (uint8_t i = 0; i < (BLOCK_SIZE / CHUNK_SIZE); i++) {
-        uint8_t *p = (uint8_t *)((char *)block + current_offset);
+        uint32_t *p = (uint32_t *)((char *)block + current_offset);
         printf("stored value: %d\n", *p);
         current_offset += CHUNK_SIZE;
     }
