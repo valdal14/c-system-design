@@ -50,10 +50,10 @@ void audit_struct_layout(void) {
     size_t com_size = sizeof(CompactEventMeta);
 
     printf("Size of RawEventMeta: %zu\n", raw_size);
-    printf("Align of RawEventMeta: %lu\n", _Alignof(RawEventMeta));
+    printf("Align of RawEventMeta: %zu\n", _Alignof(RawEventMeta));
     printf("-------------------------------------\n");
     printf("Size of CompactEventMeta: %zu\n", com_size);
-    printf("Align of CompactEventMeta: %lu\n", _Alignof(CompactEventMeta));
+    printf("Align of CompactEventMeta: %zu\n", _Alignof(CompactEventMeta));
     printf("-------------------------------------\n");
 
     show_offsets(RAW);
@@ -97,18 +97,18 @@ void show_offsets(StructType type) {
     
     switch (type) {
         case RAW:
-            printf("Offset of RawEventMeta->version %lu\n", offsetof(RawEventMeta, version));
-            printf("Offset of RawEventMeta->timestamp_ns %lu\n", offsetof(RawEventMeta, timestamp_ns));
-            printf("Offset of RawEventMeta->source_id %lu\n", offsetof(RawEventMeta, source_id));
-            printf("Offset of RawEventMeta->payload_len %lu\n", offsetof(RawEventMeta, payload_len));
-            printf("Offset of RawEventMeta->flags %lu\n", offsetof(RawEventMeta, flags));
+            printf("Offset of RawEventMeta->version     : %zu\n", offsetof(RawEventMeta, version));
+            printf("Offset of RawEventMeta->timestamp_ns: %zu\n", offsetof(RawEventMeta, timestamp_ns));
+            printf("Offset of RawEventMeta->source_id   : %zu\n", offsetof(RawEventMeta, source_id));
+            printf("Offset of RawEventMeta->payload_len : %zu\n", offsetof(RawEventMeta, payload_len));
+            printf("Offset of RawEventMeta->flags       : %lu\n", offsetof(RawEventMeta, flags));
             break;
         case COM:
-            printf("Offset of CompactEventMeta->timestamp_ns %lu\n", offsetof(CompactEventMeta, timestamp_ns));
-            printf("Offset of CompactEventMeta->payload_len %lu\n", offsetof(CompactEventMeta, payload_len));
-            printf("Offset of CompactEventMeta->source_id %lu\n", offsetof(CompactEventMeta, source_id));
-            printf("Offset of CompactEventMeta->version %lu\n", offsetof(CompactEventMeta, version));
-            printf("Offset of CompactEventMeta->flags %lu\n", offsetof(CompactEventMeta, flags));
+            printf("Offset of CompactEventMeta->timestamp_ns: %zu\n", offsetof(CompactEventMeta, timestamp_ns));
+            printf("Offset of CompactEventMeta->payload_len : %zu\n", offsetof(CompactEventMeta, payload_len));
+            printf("Offset of CompactEventMeta->source_id   : %zu\n", offsetof(CompactEventMeta, source_id));
+            printf("Offset of CompactEventMeta->version     : %zu\n", offsetof(CompactEventMeta, version));
+            printf("Offset of CompactEventMeta->flags       : %zu\n", offsetof(CompactEventMeta, flags));
             break;
         default:
             fprintf(stderr, "Invalid Struct type\n");
