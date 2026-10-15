@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stddef.h>
-#include <errno.h>
 
 typedef struct {
     uint8_t  version;
@@ -47,11 +46,13 @@ int main(void) {
 
 void audit_struct_layout(void) { 
     uint64_t packtes_num = 50000000;
+    size_t raw_size = sizeof(RawEventMeta);
+    size_t com_size = sizeof(CompactEventMeta);
 
-    printf("Size of RawEventMeta: %zu\n", sizeof(RawEventMeta));
+    printf("Size of RawEventMeta: %zu\n", raw_size);
     printf("Align of RawEventMeta: %lu\n", _Alignof(RawEventMeta));
     printf("-------------------------------------\n");
-    printf("Size of CompactEventMeta: %zu\n", sizeof(CompactEventMeta));
+    printf("Size of CompactEventMeta: %zu\n", com_size);
     printf("Align of CompactEventMeta: %lu\n", _Alignof(CompactEventMeta));
     printf("-------------------------------------\n");
 
@@ -60,23 +61,34 @@ void audit_struct_layout(void) {
     show_offsets(COM);
     printf("-------------------------------------\n");
 
-    uint64_t sum1 = (offsetof(RawEventMeta, version) +
+
+    uint64_t useful_bytes_raw = (offsetof(RawEventMeta, version) +
         offsetof(RawEventMeta, timestamp_ns) +
         offsetof(RawEventMeta, source_id) +
         offsetof(RawEventMeta, payload_len) +
-        offsetof(RawEventMeta, flags)) * packtes_num;
+        offsetof(RawEventMeta, flags));
     
 
-    uint64_t sum2 = (offsetof(CompactEventMeta, version) +
+    uint64_t useful_bytes_com = (offsetof(CompactEventMeta, version) +
         offsetof(CompactEventMeta, timestamp_ns) +
         offsetof(CompactEventMeta, source_id) +
         offsetof(CompactEventMeta, payload_len) +
-        offsetof(CompactEventMeta, flags)) * packtes_num;
+        offsetof(CompactEventMeta, flags));
     
-    printf("Bytes sum for RawEventMeta    : %llu\n", sum1);
-    printf("Bytes sum for CompactEventMeta: %llu\n", sum2);
+    printf("Useful bytes RawEventMeta    : %llu\n", useful_bytes_raw);
+    printf("Useful bytes CompactEventMeta: %llu\n", useful_bytes_com);
+    printf("-------------------------------------\n");
 
-    printf("Total bytes saved: %llu\n", (sum1 - sum2));
+    uint64_t wasted_padding_raw = raw_size - useful_bytes_raw;
+    uint64_t wasted_padding_com = com_size - useful_bytes_com;
+
+    printf("Wasted RawEventMeta padding    : %llu\n", wasted_padding_raw);
+    printf("Wasted CompactEventMeta padding: %llu\n", wasted_padding_com);
+    printf("-------------------------------------\n");
+
+    uint64_t total_bytes_saved = (sizeof(RawEventMeta) - sizeof(CompactEventMeta)) * packtes_num;
+
+    printf("Total bytes saved: %llu\n", total_bytes_saved);
 
 }
 
@@ -99,7 +111,7 @@ void show_offsets(StructType type) {
             printf("Offset of CompactEventMeta->flags %lu\n", offsetof(CompactEventMeta, flags));
             break;
         default:
-            perror("Invalid Struct type\n");
+            fprintf(stderr, "Invalid Struct type\n");
             break;
     }
 }
