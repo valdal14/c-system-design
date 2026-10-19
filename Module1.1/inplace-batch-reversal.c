@@ -52,8 +52,7 @@ int8_t verify(void *base, size_t count, size_t elem_size);
 int main(void) 
 {
     uint64_t values[] = {500, 400, 300, 200, 100, 50, 10, 0};
-    size_t count = sizeof(values) / sizeof(values[0]);
-
+    size_t count = sizeof(values) / sizeof(*values);
     uint64_t *buffer = init_pool(count, values);
     
     int8_t res = generic_array_reverse(buffer, count, sizeof(uint64_t));
@@ -76,7 +75,7 @@ int main(void)
 
 void *init_pool(size_t count, const uint64_t *values) { 
     
-    uint64_t *base = (uint64_t *)calloc(1, sizeof(uint64_t) * count + 1);
+    uint64_t *base = (uint64_t *)calloc(1, sizeof(uint64_t) * count);
     if (verify(base, count, sizeof(uint64_t)) != 0) exit(EXIT_FAILURE);
     
     for (uint8_t i = 0; i < count; i++) {
@@ -94,19 +93,16 @@ int8_t generic_array_reverse(void *base, size_t count, size_t elem_size) {
     if (verify(base, count, elem_size) != 0) return -1;
     if (count == 1) return 0;
 
-    uint8_t iteration = (uint8_t)count / 2;
-    size_t counter = count - 1;
-    size_t size = 0;
+    uint8_t *left = (uint8_t *)base;
+    uint8_t *right = (uint8_t *)base + ((count - 1) * elem_size);
 
-    for (uint8_t i = 0; i < iteration; i++) {
-        uint64_t *start = (uint64_t *)((char *)base + size);
-        uint64_t *end = (uint64_t *)((char *)base + ((counter) * elem_size));
-        
-        int8_t res = generic_byte_swap(start, end, elem_size);
+    while (left < right) 
+    {
+        int8_t res = generic_byte_swap(left, right, elem_size);
         if (res != 0) return -1;
-        
-        size += elem_size;
-        counter--;
+            
+        left += elem_size;        
+        right -= elem_size;
     }
     
     return 0;
@@ -116,9 +112,14 @@ int8_t generic_byte_swap(void *elem_a, void *elem_b, size_t elem_size) {
     
     if (elem_a == NULL || elem_b == NULL || elem_size <= 0) return -1;
 
-    uint64_t temp = *(uint64_t *)elem_a;
-    *(uint64_t *)elem_a = *(uint64_t *)elem_b;
-    *(uint64_t *)elem_b = temp;
+    uint8_t *a_bytes = (uint8_t *)elem_a;
+    uint8_t *b_bytes = (uint8_t *)elem_b;
+
+    for (size_t i = 0; i < elem_size; i++) {
+        uint8_t temp = *(a_bytes + i);
+        *(a_bytes + i) = *(b_bytes + i);
+        *(b_bytes + i) = temp;
+    }
 
     return 0;
 }
