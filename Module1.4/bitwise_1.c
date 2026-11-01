@@ -45,7 +45,7 @@
 
 /**
  * @brief Helper macro used to force the flag of the
- * given HEX mask to be set to 0 based on the value (val)
+ * given HEX mask to be set to 1 based on the value (val)
  * provided
  *
  * @param val uint8_t value
@@ -134,8 +134,7 @@ uint8_t is_gateway_ready(uint8_t reg) {
 }
 
 uint8_t clear_faults(uint8_t reg) {
-    CLEAN_FLAG(reg, REG_OVERHEAT);
-    CLEAN_FLAG(reg, REG_CRC_ERR);
+    CLEAN_FLAG(reg, REG_OVERHEAT | REG_CRC_ERR);
     return reg;  
 }
 
