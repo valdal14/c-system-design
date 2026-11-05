@@ -84,11 +84,68 @@ void assert_data(Packet p, uint16_t id, uint8_t is_flying, uint8_t batter_level,
  * @brief Stores the parsed packet into the buffer 
  *
  * @param buffer Packet double pointer
- * @parm packet Packet
- * @parm index size_t
+ * @param packet Packet
+ * @param index size_t
  * @return int
  */
 int store_parsed_packet(Packet **buffer, Packet packet, size_t index);
+
+/**
+ * @brief Helper function used to compare in ASC 
+ * two void pointers
+ *
+ * @param a const void pointer
+ * @param b const void pointer
+ * @return int
+ */
+int compare_asc(const void *a, const void *b);
+
+// struct declaration for the function pointers
+struct SortingPacket;
+
+// Function pointers signature for packets sorting 
+typedef void (*SortPackets)(struct SortingPacket *self, size_t num_packtes, size_t size, int(*compare)(const void *a, const void *b));
+
+/**
+ * @brief Helper struct used to handle the sorting of 
+ * parsed packets
+ */
+typedef struct SortingPacket
+{
+    Packet **buffer;
+    SortPackets sorting;
+} SortingPacket;
+
+/**
+ * @brief Sorts Packet from the buffer using a compare callback 
+ *
+ * @param self SortingPacket struct
+ * @param num_packtes size_t
+ * @param size size_t
+ * @param compare int pointer function callback
+ * @return void
+ */
+void sorting(SortingPacket *self, size_t num_packtes, size_t size, int(*compare)(const void *a, const void *b));
+
+/**
+ * @brief Helper function used to check the sorted buffer 
+ *
+ * @param buffer Packet double pointer
+ * @param num_packtes size_t
+ * @return void
+ */
+void print_stored_packet(Packet **buffer, size_t num_packtes);
+
+/**
+ * @brief Cleans up allocated data 
+ *
+ * @param buffer Packet double pointer
+ * @param num_packtes size_t
+ * @return void
+ */
+void cleanup(Packet **buffer, size_t num_packtes);
+
+/// MAIN METHOD -------------------------------------------------------------------------------------------------------
 
 int main(void)
 {
@@ -118,11 +175,26 @@ int main(void)
 
     // Store the parsed packet to the buffer
     if (store_parsed_packet(ba.buffer, pp1.packet, 0) != 1) return -1;
-    if (store_parsed_packet(ba.buffer, pp2.packet, 0) != 1) return -1;
-    if (store_parsed_packet(ba.buffer, pp3.packet, 0) != 1) return -1;
+    if (store_parsed_packet(ba.buffer, pp2.packet, 1) != 1) return -1;
+    if (store_parsed_packet(ba.buffer, pp3.packet, 2) != 1) return -1;    
+    
+    // Sorting Packets 
+    SortingPacket sp;
+    sp.buffer = ba.buffer;
+    sp.sorting = sorting;
+    
+    sp.sorting(&sp, MAX_CAPACITY, sizeof(Packet *), compare_asc);
+
+    // Check the sorting result
+    print_stored_packet(ba.buffer, MAX_CAPACITY);
+
+    // cleanup
+    cleanup(ba.buffer, MAX_CAPACITY);
 
     return 0;
 }
+
+/// IMPLEMENTATION ----------------------------------------------------------------------------------------------------
 
 BufferAllocation init(size_t elements) {
     
@@ -132,6 +204,7 @@ BufferAllocation init(size_t elements) {
     {
         ba.buffer = NULL;    
         ba.response_code = 0; 
+        return ba;
     }
     
     Packet **buffer = (Packet **)calloc(elements, sizeof(Packet *));
@@ -140,6 +213,7 @@ BufferAllocation init(size_t elements) {
     {
         ba.buffer = NULL;
         ba.response_code = 0;    
+        return ba;
     }
 
     for (size_t i = 0; i < elements; i++) {
@@ -212,7 +286,7 @@ void assert_data(Packet p, uint16_t id, uint8_t is_flying, uint8_t batter_level,
 
 int store_parsed_packet(Packet **buffer, Packet packet, size_t index) {
 
-    Packet *np = (Packet *)(*(buffer + index));
+    Packet *np = *(Packet **)(buffer + index);
     if (np == NULL) return 0;
 
     np->drone_id = packet.drone_id;
@@ -221,6 +295,47 @@ int store_parsed_packet(Packet **buffer, Packet packet, size_t index) {
     np->error_code = packet.error_code;
     np->temperature = packet.temperature;
 
-    printf("Stored parsed packet id [0x%X]\n", np->drone_id);
+    printf("Stored parsed packet id [0x%X] at address: %p\n", np->drone_id, (void *)np);
     return 1; 
+}
+
+void sorting(SortingPacket *self, size_t num_packtes, size_t size, int(*compare)(const void *a, const void *b)) {
+    qsort((void **)self->buffer, num_packtes, size, compare);
+}
+
+int compare_asc(const void *a, const void *b) {
+    // Cast to double pointer, then dereference once to get the Packet pointer
+    const Packet *p1 = *(const Packet **)a;
+    const Packet *p2 = *(const Packet **)b;
+    // desc order
+    return p2->batter_level - p1->batter_level;
+}
+
+void print_stored_packet(Packet **buffer, size_t num_packtes) {
+    
+    printf("\n .:: Drones Report ::.\n");
+    printf("---------------------------------\n");
+    
+    for (size_t i = 0; i < num_packtes; i++) {
+        Packet *p = *((Packet **)(buffer + i));
+        printf("DRONE %zu DATA:\n", i);
+        printf("Drone id     : 0x%X\n", p->drone_id);
+        printf("Battery Level: %d\n", p->batter_level);
+        printf("Is Flying    : %s\n", (p->is_flying == 0 ? "NO" : "YES"));
+        printf("Error code   : %d\n", p->error_code);
+        printf("Temerature   : %d\n", p->temperature);
+        printf("---------------------------------\n");
+    }
+}
+
+void cleanup(Packet **buffer, size_t num_packtes) {
+    
+    if (buffer == NULL) return;
+
+    for (size_t i = 0; i < num_packtes; i++) {
+        Packet *p = *((Packet **)(buffer + i));
+        if (p != NULL) free(p);
+    }
+
+    free(buffer);
 }
