@@ -198,8 +198,7 @@ uint8_t allocate(Data *data, SDSDataModel *sds) {
 
         if (ptr == NULL) {
             fprintf(stderr, "Reallocating the buffer failed\n");
-            free(sds->buffer);
-            free(sds);
+            cleanup(sds);
             return 0;
 
         } else {
