@@ -4,7 +4,6 @@
 #include <string.h>
 #include <assert.h>
 
-// TODO: Define your SDS struct here
 typedef struct
 {
     size_t len;
