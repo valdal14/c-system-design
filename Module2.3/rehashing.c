@@ -237,44 +237,26 @@ void hash_resize(HashTable *self, uint8_t(*hash)(uint16_t key, size_t size)) {
 }
 
 uint8_t hash_lookup(HashTable *self, uint16_t key, uint8_t *found, uint8_t(*hash)(uint16_t key, size_t size)) {
-
-    if (self == NULL || found == NULL)
-    {
-        *found = 0;
-        return *found;
+    
+    if (self == NULL || found == NULL) {
+        if (found != NULL) *found = 0;
+        return 0;
     }
 
     size_t index = hash(key, self->size);
-    // check first for an index out of bound
     HashNode *current = self->buffer[index];
-    if (current == NULL)
-    {
-        *found = 0;
-        return *found;
-    }
 
-    // return directly by key
-    if (current->key == key)
-    {
-        *found = 1;
-        return self->buffer[index]->value;
-    }
-    
-    // if not found directly by index start the LL lookup
-    while (current != NULL)
-    {
-        if (current->key == key)
-        {
+    while (current != NULL) {
+        if (current->key == key) {
             *found = 1;
             return current->value;
         }
-
         current = current->next;
     }
 
-    // edge case return not found
+    // Edge case: Return not found (either empty bucket, or end of chain reached)
     *found = 0;
-    return *found;
+    return 0;
 }
 
 void add_new(struct HashTable *self, struct HashNode *node, uint8_t index) {
